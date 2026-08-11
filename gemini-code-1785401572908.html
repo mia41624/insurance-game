@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>產險啟動！水逆生存戰</title>
+    <style>
+        :root {
+            --primary-green: #2e7d32;
+            --primary-blue: #1565c0;
+            --primary-red: #c62828;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 480px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 16px;
+            box-sizing: border-box;
+            position: relative;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 狀態列 */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #eef2f5;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .phase-indicator {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        /* 遊戲區域 */
+        .game-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 卡牌通用樣式 */
+        .card {
+            border-radius: 12px;
+            padding: 16px;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        .card-green { background: linear-gradient(135deg, #4caf50, #2e7d32); }
+        .card-blue { background: linear-gradient(135deg, #42a5f5, #1565c0); }
+        .card-red { background: linear-gradient(135deg, #ef5350, #c62828); }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .card-effect {
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.2);
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+
+        /* 防禦裝備區 */
+        .equipment-zone {
+            background: #f8f9fa;
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 10px;
+            min-height: 60px;
+        }
+        .equipment-title {
+            font-size: 0.8rem;
+            color: #777;
+            margin-bottom: 6px;
+        }
+        .equipment-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .eq-badge {
+            background: #1565c0;
+            color: white;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+		/* 按鈕風格 */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        /* 底層容器按鈕（如：享受樂活、跳過 pass、迎向命運）均分寬度 */
+        .btn-group button {
+            flex: 1;
+        }
+        /* 通用按鈕基礎設定 */
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            box-sizing: border-box;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary { background-color: #2196f3; color: white; }
+        .btn-success { background-color: #4caf50; color: white; }
+        .btn-danger { background-color: #f44336; color: white; }
+        .btn-secondary { background-color: #78909c; color: white; }
+
+        /* 防禦卡商店購買按鈕：強制定寬 */
+        .shop-item button {
+            flex: none !important;
+            width: 85px !important;
+            min-width: 85px !important;
+            max-width: 85px !important;
+            padding: 8px 0 !important;
+            text-align: center !important;
+            font-size: 0.85rem !important;
+        }
+
+        /* 產險啟動彈窗特效 */
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.75);
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: white;
+            width: 85%;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        .activate-title {
+            color: #1565c0;
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px #bbdefb;
+        }
+
+        /* 防禦卡選擇列表 */
+        .def-shop-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        .shop-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #333;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- 頂部玩家狀態 -->
+    <div class="status-bar">
+        <div class="status-item">❤️ <span id="hp-val">5</span></div>
+        <div class="status-item">🪙 <span id="coin-val">10</span></div>
+        <div class="status-item">🔄 第 <span id="round-val">1</span>/3 回合</div>
+    </div>
+
+    <div class="phase-indicator" id="phase-text">階段 1：選擇是否執行生活樂活卡</div>
+
+    <!-- 遊戲主要內容顯示區 -->
+    <div class="game-area" id="game-area">
+        <!-- 動態渲染卡牌與內容 -->
+    </div>
+
+    <!-- 玩家持有的防禦裝備區 -->
+    <div class="equipment-title">🛡️ 目前配備的防禦卡 / 裝備：</div>
+    <div class="equipment-zone">
+        <div class="equipment-list" id="eq-list">
+            <span style="font-size: 0.8rem; color:#aaa;">尚未購買任何防禦卡</span>
+        </div>
+    </div>
+</div>
+
+<!-- 特效彈窗（產險啟動 / 結算） -->
+<div class="modal-overlay" id="modal">
+    <div class="modal-content" id="modal-content">
+        <!-- 動態寫入內容 -->
+    </div>
+</div>
+
+<script>
+// --- 卡牌資料設定 ---
+const GREEN_CARDS = [
+    {
+        id: 'G1',
+        title: '斜槓開啟！深夜外送與網拍接單',
+        desc: '白天上班/上課，晚上騎機車跑外送。雖然肝有點疼，但看著銀行帳戶數字往上漲，一切都值了！',
+        costHp: 2, costCoin: 0, addCoin: 6, addHp: 0,
+        img: 'images/斜槓外送.png'
+    },
+    {
+        id: 'G2',
+        title: '二手市集大開張・斷捨離',
+        desc: '假日去擺二手市集，順便在賣貨便出清家裡的二手衣服，把房間堆積如山的舊衣服、沒在用的盲盒玩具跟過期保養品通通出清！房間變大了，錢包也變鼓了！',
+        costHp: 0, costCoin: 0, addCoin: 3, addHp: 1,
+        img: 'images/二手市集.png'
+    },
+    {
+        id: 'G3',
+        title: '樂活健走！社區千歲路跑隊',
+        desc: '清晨五點跟隔壁阿姨去公園跳廣場舞、參加社區健走比賽。運動養生、心情大好，順便交流哪裡的有機蔬菜在打折！',
+        costHp: 0, costCoin: 0, addCoin: 1, addHp: 2,
+        img: 'images/樂活健走.png'
+    },
+    {
+        id: 'G4',
+        title: '打造夢幻城堡！租屋處大改造',
+        desc: '買了香氛蠟燭、鋪上木紋地板、買了高檔除濕機與水氧機。把小小的租屋處打造成日系奶油風，每天下班回家都像在住精品飯店！',
+        costHp: 0, costCoin: 2, addCoin: 0, addHp: 3,
+        img: 'images/租屋改造.png'
+    },
+    {
+        id: 'G5',
+        title: '吸貓擼狗・毛孩療癒大爆發',
+        desc: '加班回家拖著疲憊身軀，門一打開毛孩就衝過來狂甩尾巴、發出嚕嚕聲翻肚討摸！餵牠吃個美味肉泥，一整天的壓力瞬間蒸發！',
+        costHp: 0, costCoin: 1, addCoin: 0, addHp: 3,
+        img: 'images/吸貓擼狗.png'
+    },
+    {
+        id: 'G6',
+        title: '發票神開獎・中獎五百塊',
+        desc: '發票開獎！打開財政部 App 發現自己居然中了專屬獎 500 元！直接自動匯入銀行帳號，今晚立馬點外送手搖飲加波霸！',
+        costHp: 0, costCoin: 0, addCoin: 2, addHp: 1,
+        img: 'images/發票中獎.png'
+    },
+	{
+        id: 'G7',
+        title: '特休排好排滿・爽休歐美',
+        desc: '把特休、補休跟連假一口氣湊滿 10 天飛往歐洲！手機開啟『極致勿擾模式』，把公務通知通通靜音。在塞納河畔喝黑咖啡、在阿爾卑斯山下發呆，世界怎樣毀滅都跟我無關！',
+        costHp: 0, costCoin: 3, addCoin: 0, addHp: 4,
+        img: 'images/爽休歐美.png'
+    },
+	{
+        id: 'G8',
+        title: '健身房重訓・肌肉線條大爆發',
+        desc: '下班去健身房痛快汗流浹背深蹲跟硬舉！看著鏡子裡越來越結實的身體線條，穿衣服越來越好看，自信感直接拉滿！',
+        costHp: 0, costCoin: 1, addCoin: 0, addHp: 2,
+        img: 'images/健身重訓.png'
+    },
+	{
+        id: 'G9',
+        title: '追劇神卡！週末一口氣追完熱門劇',
+        desc: '躺在沙發上零食吃到飽、一口氣把 16 集韓劇追完！雖然眼睛有點酸、黑眼圈爆發，但心靈得到了極致的放鬆！',
+        costHp: 1, costCoin: 1, addCoin: 0, addHp: 4,
+        img: 'images/周末追劇.png'
+    },
+    {
+        id: 'G10',
+        title: '演唱會搶票成功・神席入手！',
+        desc: '開賣前十秒狂刷網頁，居然真的搶到第一排神席！雖然門票價格讓人心痛，但現場跟著大合唱的感動無價！',
+        costHp: 0, costCoin: 2, addCoin: 0, addHp: 4,
+        img: 'images/搶票成功.png'
+    },
+    {
+        id: 'G11',
+        title: '當當當！股票獲利結算・飆股漲停',
+        desc: '之前買的科技股連拉三根漲停板！看著帳戶綠轉紅，當機立斷入袋為安，今晚直接叫頂級燒肉外送 célébrer！',
+        costHp: 0, costCoin: 0, addCoin: 7, addHp: 1,
+        img: 'images/飆股漲停.png'
+    },
+    {
+        id: 'G12',
+        title: '露營瘋體驗・野外奢華 Glamping',
+        desc: '週末跟朋友去山裡豪華露營！喝熱可可、看星空、烤棉花糖。雖然被蚊子叮了好幾個包，但芬多精直接吸飽！',
+        costHp: 1, costCoin: 2, addCoin: 0, addHp: 5,
+        img: 'images/豪華露營.png'
+    },
+    {
+        id: 'G13',
+        title: '廚藝大躍進・自製健康減脂餐',
+        desc: '買了氣炸鍋與新鮮食材，自己下廚做舒肥雞胸肉配地瓜。既省下了昂貴的外送費，身體感覺輕盈又健康！',
+        costHp: 0, costCoin: 1, addCoin: 2, addHp: 2,
+        img: 'images/減脂健康.png'
+    },
+    {
+        id: 'G14',
+        title: '手作陶藝・香氛工作坊',
+        desc: '報名了週末手作體驗課程，親手捏了一個醜萌的拉麵碗和調配專屬香氛。捏陶過渡期的無腦專注超級療癒！',
+        costHp: 0, costCoin: 2, addCoin: 0, addHp: 4,
+        img: 'images/手作陶藝.png'
+    },
+    {
+        id: 'G15',
+        title: '夜市美食大吃爆・胃袋失控',
+        desc: '地瓜球、大腸包小腸、排骨酥、手搖飲通通來一套！雖然隔天量體重有點不敢看，但滿足感直接刷滿！',
+        costHp: 1, costCoin: 1, addCoin: 0, addHp: 3,
+        img: 'images/夜市美食.png'
+    },
+    {
+        id: 'G16',
+        title: '極限高空彈跳・滑翔翼挑戰',
+        desc: '挑戰自我極限！從百米高空一躍而下，心臟差點跳出來，但腎上腺素飆升的快感讓人體驗到『活著的真諦』！',
+        costHp: 3, costCoin: 2, addCoin: 0, addHp: 7,
+        img: 'images/極限運動.png'
+    }
+];
+
+const BLUE_CARDS = [
+    // --- 保險卡 ---
+    {
+        id: 'B1',
+        title: '海外旅平暨不便險',
+        category: '保險卡',
+        costCoin: 1,
+        tags: ['海外旅遊'],
+        desc: '遇到班機延誤或突發水土不服都不怕。',
+        passiveHp: 0,
+        img: 'images/旅平險.png'
+    },
+    {
+        id: 'B2',
+        title: '甲式車體險',
+        category: '保險卡',
+        costCoin: 3,
+        tags: ['交通事故'],
+        desc: '無論不明刮損或碰撞，全額原廠修復。',
+        passiveHp: 0,
+        img: 'images/車體險.png'
+    },
+    {
+        id: 'B3',
+        title: '第三人責任險＋超額責任險',
+        category: '保險卡',
+        costCoin: 2,
+        tags: ['交通事故'],
+        desc: '擦撞天價超跑也不怕，打造千萬級防護。',
+        passiveHp: 0,
+        img: 'images/第三人責任險.png'
+    },
+    {
+        id: 'B5',
+        title: '住宅火災及地震綜合保險',
+        category: '保險卡',
+        costCoin: 2,
+        tags: ['居家火災'],
+        desc: '保障房屋與動產，延燒鄰居理賠全包。',
+        passiveHp: 0,
+        img: 'images/住宅火險.png'
+    },
+    {
+        id: 'B7',
+        title: '行動裝置保險',
+        category: '保險卡',
+        costCoin: 1,
+        tags: ['手機防禦'],
+        desc: '螢幕破裂或泡水原廠免費維修。',
+        passiveHp: 0,
+        img: 'images/行動裝置險.png'
+    },
+    {
+        id: 'B8',
+        title: '寵物綜合保險',
+        category: '保險卡',
+        costCoin: 2,
+        tags: ['寵物醫療'],
+        desc: '門診、住院、手術費用強大後盾。',
+        passiveHp: 0,
+        img: 'images/寵物險.png'
+    },
+
+    // --- 觀念卡 ---
+    {
+        id: 'B4',
+        title: '防災三部曲觀念',
+        category: '觀念卡',
+        costCoin: 1,
+        tags: ['居家火災'],
+        desc: '看完防災宣導影片並落實安檢，每回合結束補血 1 點。',
+        passiveHp: 1,
+        img: 'images/漏電斷路器.png'
+    },
+    {
+        id: 'B10',
+        title: '社區防詐神隊友',
+        category: '觀念卡',
+        costCoin: 1,
+        tags: ['數位詐騙'],
+        desc: '加入防詐宣導群組，一眼看穿釣魚連結與假金流協議！',
+        passiveHp: 0,
+        img: 'images/防詐神隊友.png'
+    },
+
+    // --- 設備卡 ---
+    {
+        id: 'B6',
+        title: '軍規防禦三件套',
+        category: '設備卡',
+        costCoin: 1,
+        tags: ['手機防禦'],
+        desc: '防摔殼+鋼化膜，每回合結束補血 1 點。',
+        passiveHp: 1,
+        img: 'images/手機防禦.png'
+    },
+    {
+        id: 'B9',
+        title: '智能寵物餵食器攝影版',
+        category: '設備卡',
+        costCoin: 1,
+        tags: ['寵物醫療'],
+        desc: '遠端監控定時出糧，每回合結束補血 1 點。',
+        passiveHp: 1,
+        img: 'images/智能餵食器.png'
+    }
+];
+
+const RED_CARDS = [
+    {
+        id: 'R1',
+        title: '說好的巴黎鐵塔呢？',
+        tag: '海外旅遊',
+        desc: '特休排好了、飯店訂好了、連發 IG 的網美文案都寫好了！結果班機延誤 8 小時＋行李被寄到南極……巴黎鐵塔沒看到，只看到滿滿的無奈！',
+        punishCoin: 4, punishHp: 2,
+        defenders: {
+            'B1': { coin: 0, hp: -1, msg: '獲得班機延誤理賠金，去貴賓室吃龍蝦！免扣金幣，血條 +1！' } // hp-1 代表 +1
+        },
+        img: 'images/班機延誤.png'
+    },
+    {
+        id: 'R2',
+        title: '除濕機的逆襲',
+        tag: '居家火災',
+        desc: '梅雨季開著除濕機出門乾衣，沒想到電路走火！不僅自己家被燒成灰燼，濃煙還熏黑了隔壁房東的牆壁與鄰居的名畫……',
+        punishCoin: 6, punishHp: 3,
+        defenders: {
+            'B4': { coin: 0, hp: 0, msg: '因為安裝了漏電斷路器，異常電流瞬間切斷！完全免疫傷害！' },
+            'B5': { coin: 1, hp: 0, msg: '住宅火險啟動！全額理賠重建與延燒責任，僅需自負額 1 金幣！' }
+        },
+        img: 'images/除濕機走火.png'
+    },
+    {
+        id: 'R3',
+        title: '賣貨便之「您尚未簽署金流」',
+        tag: '詐騙',
+        desc: '點擊假買家客服連結，輸入卡號後慘遭盜刷！',
+        punishCoin: 5, punishHp: 3,
+        defenders: {
+            'B10': { 
+                coin: 0, 
+                hp: 0, 
+                msg: '防詐神隊友發揮作用！一眼看穿詐騙釣魚連結，直接檢舉封鎖！完全免疫傷害（💸0扣錢 ＆ 💔0扣血）！' 
+            }
+        },
+        img: 'images/詐騙簡訊.png'
+    },
+    {
+        id: 'R4',
+        title: '是時候生個幾萬元的小病了',
+        tag: '寵物醫療',
+        desc: '毛孩平時乖巧可愛，但一發狠就直接吞了半條地毯！半夜掛急診、照 X 光、開刀取異物……獸醫師溫柔地遞上帳單：『先生，總共是四萬八千元整喔！',
+        punishCoin: 5, punishHp: 2,
+        defenders: {
+            'B8': { coin: 1, hp: -2, msg: '寵物險啟動！僅需付 1 金幣自負額，毛孩康復血條 +2！' },
+            'B9': { coin: 0, hp: 0, msg: '智能餵食器定時定量，毛孩肚子飽飽沒亂吞地毯！完全免疫！' }
+        },
+        img: 'images/毛孩生病.png'
+    },
+    {
+        id: 'R5',
+        title: '水星逆行之手滑大師',
+        tag: '手機防禦',
+        desc: '拿著分期付款才剛買的全新旗艦機，單手拍照時一個手滑──喀啦！螢幕蜘蛛網狀碎裂，原廠報價換螢幕居然要一萬八，簡直比買二手手機還貴！',
+        punishCoin: 3, punishHp: 2,
+        defenders: {
+            'B6': { coin: 0, hp: 0, msg: '軍規防摔殼發揮效果！手機彈起來完好無損，完全免疫！' },
+            'B7': { coin: 0, hp: -1, msg: '行動裝置保險啟動！原廠免費維修換新機，血條 +1！' }
+        },
+        img: 'images/手機摔破.png'
+    },
+	{
+        id: 'R6',
+        title: '水淹金山寺：愛車變浴缸',
+        tag: '交通事故', // 或設定為天災/車輛毀損標籤
+        desc: '午後超大豪雨加颱風積水，停在地下地下室或低窪處的愛車直接變成水族箱，引擎泡水維修費天價！',
+        punishCoin: 6, // 裸奔扣除 6 金幣（拖吊與泡水車大修費）
+        punishHp: 3,   // 裸奔扣除 3 血條（心疼愛車與無車可用的巨大壓力）
+        defenders: {
+            'B2': { 
+                coin: 0, 
+                hp: 0, 
+                msg: '甲式車體險啟動！颱風積水與泡水損失全額由保險買單，原廠免費修復！完全免疫傷害（💸0扣錢 ＆ 💔0扣血）！' 
+            }
+        },
+        img: 'images/愛車泡水.png' // 記得替換成你的圖片路徑
+    },
+	{
+        id: 'R7',
+        title: '閃開！三寶降臨！',
+        tag: '交通事故',
+        desc: '開車出門遇到鬼之切換車道的三寶！煞車不及直接撞上天價名車，修車費與醫療賠償讓人絕望……',
+        punishCoin: 6, // 裸奔罰扣 6 金幣（車修與賠償費）
+        punishHp: 3,   // 裸奔罰扣 3 血條（巨大的精神打擊）
+        defenders: {
+            'B3': { 
+                coin: 0, 
+                hp: 0, 
+                msg: '第三人與超額責任險啟動！千萬級防護罩發揮效果，對方天價維修費由保險吸收，免賣房！完全免疫！' 
+            }
+        },
+        img: 'images/三寶降臨.png' // 記得替換成你的圖片路徑
+    }
+];
+
+// --- 遊戲狀態變數宣告 ---
+let gameState = {
+    round: 1,
+    hp: 5,
+    coin: 10,
+    equipped: [], // 玩家擁有的防禦卡 ID 陣列
+    greenDeck: [],
+    redDeck: [],
+    currentGreen: null,
+    currentRed: null
+};
+
+// 補上的目前防禦卡分類變數（預設顯示保險卡）
+let currentCategory = '保險卡';
+
+// 洗牌函式
+function shuffle(array) {
+    return array.sort(() => Math.random() - 0.5);
+}
+
+// 初始化遊戲（含開始前的規則說明彈窗）
+function initGame() {
+    gameState.round = 1;
+    gameState.hp = 5;
+    gameState.coin = 10;
+    gameState.equipped = [];
+    currentCategory = '保險卡'; // 重設防禦商店分類為預設值
+    gameState.greenDeck = shuffle([...GREEN_CARDS]);
+    gameState.redDeck = shuffle([...RED_CARDS]);
+    updateUI();
+    
+    // 渲染第一回合畫面準備好
+    startPhase1();
+
+    // 遊戲一開始先跳出「規則說明彈窗」
+    showGameTutorial();
+}
+
+// --- 全新：遊戲規則引導彈窗 ---
+function showGameTutorial() {
+    showModal(`
+        <div style="text-align: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 5px;">🎮</div>
+            <h2 style="color: #1565c0; margin: 0 0 10px 0;">產險啟動！水逆生存戰</h2>
+            
+            <div style="text-align: left; background: #f8f9fa; padding: 12px; border-radius: 10px; font-size: 0.85rem; color: #444; line-height: 1.5; margin-bottom: 15px;">
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #2e7d32;">【起始條件】</p>
+                <div style="margin-bottom: 8px; padding-left: 5px;">
+                    • 初始狀態：🪙 <strong>10 枚金幣</strong> ｜ ❤️ <strong>5 點血條</strong><br>
+                    • 遊戲一共進行 <strong>3 回合</strong>。
+                </div>
+
+                <p style="margin: 8px 0 8px 0; font-weight: bold; color: #1565c0;">【每回合流程】</p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li><strong>🟢 樂活體驗：</strong>決定是否進行活動賺錢或補血。</li>
+                    <li><strong>🔵 防禦整備：</strong>可花費金幣購買產險或裝備。</li>
+                    <li><strong>🔴 命運降臨：</strong>盲抽日常衰事！若有對應防禦卡將觸發<b>「產險啟動」</b>免罰或減免！</li>
+                </ol>
+
+                <p style="margin: 8px 0 8px 0; font-weight: bold; color: #c62828;">【勝敗條件】</p>
+                <div style="padding-left: 5px;">
+                    • <strong>勝利：</strong>存活通過 3 回合，結算總分：<code>(血條 × 3) ＋ 金幣</code><br>
+                    • <strong>失敗：</strong>任一時刻血條歸零，直接<b>「水逆爆牌」</b>！
+                </div>
+            </div>
+
+            <button class="btn-success" style="width: 100%; padding: 12px; font-size: 1.05rem;" onclick="closeModal()">
+                理解規則，開始遊戲！ 🚀
+            </button>
+        </div>
+    `);
+}
+
+// 更新 UI 狀態欄
+function updateUI() {
+    document.getElementById('hp-val').innerText = gameState.hp;
+    document.getElementById('coin-val').innerText = gameState.coin;
+    document.getElementById('round-val').innerText = gameState.round;
+
+    // 更新裝備區
+    const eqContainer = document.getElementById('eq-list');
+    if (gameState.equipped.length === 0) {
+        eqContainer.innerHTML = `<span style="font-size: 0.8rem; color:#aaa;">尚未購買任何防禦卡</span>`;
+    } else {
+        eqContainer.innerHTML = gameState.equipped.map(id => {
+            const card = BLUE_CARDS.find(b => b.id === id);
+            let catIcon = card.category === '保險卡' ? '📄' : card.category === '觀念卡' ? '💡' : '⚙️';
+            return `<span class="eq-badge">${catIcon} ${card.title}</span>`;
+        }).join('');
+    }
+}
+
+// --- 階段 1：抽取生活樂活卡 ---
+function startPhase1() {
+    updateUI(); // 👈 關鍵修正：進入階段 1 時先更新右上角狀態（包含回合數）
+    
+    document.getElementById('phase-text').innerText = `第 ${gameState.round} 回合 - 階段 1：樂活體驗（選擇是否執行）`;
+    gameState.currentGreen = gameState.greenDeck.pop();
+    const card = gameState.currentGreen;
+
+    const gameArea = document.getElementById('game-area');
+    gameArea.innerHTML = `
+        <div class="card card-green">
+            <img src="${card.img}" alt="${card.title}">
+            <div class="card-title">🟢 ${card.title}</div>
+            <div class="card-desc">"${card.desc}"</div>
+            <div class="card-effect">
+                代價：${card.costHp > 0 ? '💔扣'+card.costHp+'血 ' : ''}${card.costCoin > 0 ? '💸扣'+card.costCoin+'金幣 ' : ''}
+                ${(card.costHp===0 && card.costCoin===0)?'免費':''}<br>
+                效果：${card.addHp > 0 ? '💚補'+card.addHp+'血 ' : ''}${card.addCoin > 0 ? '💰賺'+card.addCoin+'金幣' : ''}
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn-success" onclick="useGreenCard(true)">享受樂活</button>
+            <button class="btn-secondary" onclick="useGreenCard(false)">跳過 pass</button>
+        </div>
+    `;
+}
+
+function useGreenCard(choice) {
+    if (choice) {
+        const card = gameState.currentGreen;
+        
+        // 修正：只有當卡牌「需要花費金幣 (costCoin > 0)」且「玩家金幣不足」時才擋下
+        if (card.costCoin > 0 && gameState.coin < card.costCoin) {
+            alert("金幣不足，無法執行此活動！");
+            return;
+        }
+
+        // 扣除/增加金幣與血條
+        gameState.coin = gameState.coin - card.costCoin + card.addCoin;
+        gameState.hp = gameState.hp - card.costHp + card.addHp;
+        
+        if (checkGameOver()) return;
+    }
+    updateUI();
+    startPhase2();
+}
+
+// --- 階段 2：購買產險防禦卡（分類分頁版） ---
+function startPhase2() {
+    document.getElementById('phase-text').innerText = `第 ${gameState.round} 回合 - 階段 2：防禦整備（可購買防禦卡）`;
+    renderShopView();
+}
+
+function switchCategory(cat) {
+    currentCategory = cat;
+    renderShopView();
+}
+
+function renderShopView() {
+    const gameArea = document.getElementById('game-area');
+    
+    // 過濾出尚未購買且屬於目前分類的卡片
+    const availableShop = BLUE_CARDS.filter(b => !gameState.equipped.includes(b.id) && b.category === currentCategory);
+
+    // 分類 Tab HTML
+    const categories = ['保險卡', '觀念卡', '設備卡'];
+    const tabsHTML = `
+        <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+            ${categories.map(cat => `
+                <button onclick="switchCategory('${cat}')" style="
+                    flex: 1; 
+                    padding: 8px 0; 
+                    font-size: 0.85rem; 
+                    border-radius: 8px;
+                    border: none;
+                    font-weight: bold;
+                    background: ${currentCategory === cat ? '#1565c0' : '#e0e0e0'};
+                    color: ${currentCategory === cat ? '#fff' : '#444'};
+                    cursor: pointer;
+                ">
+                    ${cat}
+                </button>
+            `).join('')}
+        </div>
+    `;
+
+    // 防禦卡商品列表
+    let shopHTML = availableShop.map(card => `
+        <div class="shop-item" style="display: flex; gap: 10px; align-items: center; background: #fff; padding: 10px; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <img src="${card.img}" alt="${card.title}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background: #1565c0;">
+            <div style="flex-grow: 1; text-align: left;">
+                <div style="font-weight: bold; color: #1565c0; font-size: 0.9rem;">🔵 ${card.title}</div>
+                <div style="font-size: 0.78rem; color: #666; margin: 2px 0; line-height: 1.2;">${card.desc}</div>
+                <div style="font-size: 0.8rem; font-weight: bold; color: #e65100;">代價：💸 ${card.costCoin} 金幣</div>
+            </div>
+            <button class="btn-primary" 
+                onclick="buyBlueCard('${card.id}')" ${gameState.coin < card.costCoin ? 'disabled' : ''}>
+                ${gameState.coin < card.costCoin ? '金幣不足' : '購買'}
+            </button>
+        </div>
+    `).join('');
+
+    gameArea.innerHTML = `
+        ${tabsHTML}
+        <div class="def-shop-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 4px;">
+            ${shopHTML.length > 0 ? shopHTML : `<div style="text-align:center; padding:30px; color:#666;">🎉 目前類別（${currentCategory}）已無可購買項目！</div>`}
+        </div>
+        <div class="btn-group" style="margin-top: 10px;">
+            <button class="btn-success" onclick="startPhase3()">整備完成，迎向命運！</button>
+        </div>
+    `;
+}
+
+function buyBlueCard(cardId) {
+    const card = BLUE_CARDS.find(b => b.id === cardId);
+    if (gameState.coin >= card.costCoin) {
+        gameState.coin -= card.costCoin;
+        gameState.equipped.push(cardId);
+        updateUI();
+        renderShopView(); // 購買後重新渲染當前分類商店
+    }
+}
+
+// --- 階段 3：盲抽命運風險卡與對應結算 ---
+function startPhase3() {
+    document.getElementById('phase-text').innerText = `第 ${gameState.round} 回合 - 階段 3：命運降臨（強制盲抽）`;
+    
+    gameState.currentRed = gameState.redDeck.pop();
+    const card = gameState.currentRed;
+
+    // 檢查是否有對應的防禦卡
+    let triggeredDefId = null;
+    if (card.defenders) {
+        for (let eqId of gameState.equipped) {
+            if (card.defenders[eqId]) {
+                triggeredDefId = eqId;
+                break; // 觸發第一個可防禦的卡
+            }
+        }
+    }
+
+    const gameArea = document.getElementById('game-area');
+    gameArea.innerHTML = `
+        <div class="card card-red">
+            <img src="${card.img}" alt="${card.title}">
+            <div class="card-title">🔴 ${card.title}</div>
+            <div class="card-desc">"${card.desc}"</div>
+            <div class="card-effect">
+                裸奔懲罰：💸 扣 ${card.punishCoin} 金幣 / 💔 扣 ${card.punishHp} 血量
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn-danger" onclick="resolveFate('${triggeredDefId}')">面對命運！</button>
+        </div>
+    `;
+}
+
+function resolveFate(defId) {
+    const redCard = gameState.currentRed;
+
+    if (defId && defId !== 'null') {
+        // --- 產險啟動成功 ---
+        const defRule = redCard.defenders[defId];
+        const blueCard = BLUE_CARDS.find(b => b.id === defId);
+
+        gameState.coin -= defRule.coin;
+        gameState.hp -= defRule.hp; // 注意：hp 為負代表加血
+
+        showModal(`
+            <div class="activate-title">🛡️ 產險啟動！</div>
+            <p><strong>對應防禦：${blueCard.title}</strong></p>
+            <p style="color:#2e7d32; font-weight:bold; font-size:1.1rem;">${defRule.msg}</p>
+            <button class="btn-success" onclick="closeModalAndNext()">太好了！下一回合</button>
+        `);
+    } else {
+        // --- 無防禦，裸奔懲罰 ---
+        gameState.coin -= redCard.punishCoin;
+        gameState.hp -= redCard.punishHp;
+
+        showModal(`
+            <div style="color:#c62828; font-size:1.8rem; font-weight:bold;">💥 遭受重創！</div>
+            <p>沒有對應的防禦卡，只能硬槓風險！</p>
+            <p style="color:#c62828;">損失：💸 ${redCard.punishCoin} 金幣 / 💔 ${redCard.punishHp} 點血條</p>
+            <button class="btn-danger" onclick="closeModalAndNext()">忍痛接受...</button>
+        `);
+    }
+}
+
+// 結算回合與被動加成
+function closeModalAndNext() {
+    closeModal();
+    
+    if (checkGameOver()) return;
+
+    // 處理裝備的被動補血效果（如：斷路器、防禦套裝、餵食器）
+    gameState.equipped.forEach(eqId => {
+        const bCard = BLUE_CARDS.find(b => b.id === eqId);
+        if (bCard && bCard.passiveHp > 0) {
+            gameState.hp += bCard.passiveHp;
+        }
+    });
+
+    // 判斷是否進入下一回合
+    if (gameState.round < 3) {
+        gameState.round++; // 👈 先把回合數 +1
+        startPhase1();     // 👈 再進入階段 1（此時 startPhase1 裡面的 updateUI 就會把右上角更新成第 2 或第 3 回合）
+    } else {
+        showFinalResult();
+    }
+}
+
+// --- 檢測勝敗與結算 ---
+function checkGameOver() {
+    if (gameState.hp <= 0) {
+        gameState.hp = 0;
+        updateUI();
+        showModal(`
+            <div style="font-size:2rem;">💀</div>
+            <h2 style="color:#c62828;">水逆爆牌！戰敗！</h2>
+            <p>你的血條已歸零，人生直接撞牆崩盤！</p>
+            <div style="background:#eee; padding:20px; border-radius:8px; margin:10px 0;">
+                [ 專屬敗北迷因圖：主角躺在地上哭泣 ]
+            </div>
+            <button class="btn-primary" onclick="closeModal(); initGame();">重新挑戰</button>
+        `);
+        return true;
+    }
+    return false;
+}
+
+function showFinalResult() {
+    const totalScore = (gameState.hp * 3) + gameState.coin;
+    let rankTitle = "";
+    let rankDesc = "";
+    let rankMeme = ""; 
+    let badgeColor = "#1565c0"; // 稱號邊框顏色
+
+    // --- 全新細分分數級距（重點強化 45~75 分） ---
+    if (totalScore >= 75) {
+        // 級距 1：75 分以上 (神話級)
+        rankTitle = "🌌 國泰產險代言人・水逆平行宇宙創世神";
+        rankMeme = "【破表神級傳說】";
+        badgeColor = "#7b1fa2"; // 尊爵紫
+        rankDesc = "天啊！75分以上的神級表現！你根本是產險界的巴菲特吧！不僅風險零漏洞，還把生活樂活卡與裝備被動運算到了極致！水逆在你面前只能跪著走，你就是理財與避險的終極天花板！";
+    } else if (totalScore >= 65) {
+        // 級距 2：65~75 分 (帝王級 - 新增)
+        rankTitle = "👑 產險大亨・水逆終結者";
+        rankMeme = "【天花板級神操作】";
+        badgeColor = "#e65100"; // 帝王橘
+        rankDesc = "太強了！分數突破 65 分大關！你把每一分金幣與血條都發揮到了極致，防禦卡佈局天衣無縫，連貴賓室的龍蝦都吃到爽！水逆完全拿你沒轍！";
+    } else if (totalScore >= 55) {
+        // 級距 3：55~64 分 (金牌級 - 新增)
+        rankTitle = "🔱 資產防護網CEO・精明理財大師";
+        rankMeme = "【極致精算避險】";
+        badgeColor = "#ff8f00"; // 琥珀金
+        rankDesc = "極度優秀的操作！你展現了高超的戰術頭腦，不僅樂活享受生活，更打造了牢不可破的產險防護網。遭遇衰事依然毫髮無傷，資產與精神值雙雙爆表！";
+    } else if (totalScore >= 45) {
+        // 級距 4：45~54 分 (翡翠級 - 新增)
+        rankTitle = "🌟 避險大師・資產神盾局長";
+        rankMeme = "【全方位超前部署】";
+        badgeColor = "#2e7d32"; // 翡翠綠
+        rankDesc = "完美的風險控管！你知道什麼時候該享受、什麼時候該買好裝備防禦。就算遇到泡水車或班機延誤，產險一啟動依然老神在在，生活過得優雅又安心！";
+    } else if (totalScore >= 30) {
+        // 級距 5：30~44 分 (優等生)
+        rankTitle = "🛡️ 平安小資・順風順水幸運兒";
+        rankMeme = "【穩紮穩打過生活】";
+        badgeColor = "#1976d2"; // 質感藍
+        rankDesc = "恭喜順利通關！雖然途中遇到一些小波折，但靠著基本防衛與樂活補血，依然平平安安地存活下來，平安就是最大的福氣！";
+    } else if (totalScore >= 15) {
+        // 級距 6：15~29 分 (險勝)
+        rankTitle = "🩹 殘血倖存者・水逆重災戶";
+        rankMeme = "【捏著冷汗勉強過關】";
+        badgeColor = "#d32f2f"; // 警告紅
+        rankDesc = "呼～好險保住一條小命！你這三回合過得心驚膽跳，裸奔被爆打好幾次，錢包差點掏空、血條險些歸零。下次記得把產險買齊買滿再出門啊！";
+    } else {
+        // 級距 7：14 分以下 (低空飛過)
+        rankTitle = "💸 破產地獄犬・地表最強衰神";
+        rankMeme = "【雖然活著但全身是傷】";
+        badgeColor = "#424242"; // 黯淡灰
+        rankDesc = "居然還能活著？！雖然勉強沒有爆牌，但你的口袋已經比洗過的衣服還乾淨，心靈也滿是創傷。這不是水逆，這是水星直接砸在你頭上了吧！建議快去廟裡收驚！";
+    }
+
+    // 顯示結果彈窗
+    showModal(`
+        <h2>🎉 通關成功！遊戲結束</h2>
+        <div style="background:#f0f4f8; padding:12px; border-radius:10px; margin:10px 0;">
+            <p style="margin:4px 0;">最終血條：❤️ ${gameState.hp} × 3 = <strong>${gameState.hp * 3} 分</strong></p>
+            <p style="margin:4px 0;">最終金幣：🪙 ${gameState.coin} = <strong>${gameState.coin} 分</strong></p>
+            <hr style="border:0; border-top:1px dashed #ccc; margin:8px 0;">
+            <h3 style="color:#1565c0; margin:4px 0; font-size:1.5rem;">總結算分數：${totalScore} 分</h3>
+        </div>
+        
+        <div style="border:2px solid ${badgeColor}; border-radius:12px; padding:12px; background:#fff;">
+            <span style="font-size:0.8rem; color:${badgeColor}; font-weight:bold;">${rankMeme}</span>
+            <h3 style="color:${badgeColor}; margin:6px 0 10px 0; font-size:1.2rem;">${rankTitle}</h3>
+            <p style="font-size:0.88rem; color:#444; line-height:1.4; text-align:left; margin:0;">${rankDesc}</p>
+        </div>
+
+        <button class="btn-success" style="margin-top:15px;" onclick="closeModal(); initGame();">挑戰更高的極限！</button>
+    `);
+}
+
+// --- Modal 控制 ---
+function showModal(htmlContent) {
+    document.getElementById('modal-content').innerHTML = htmlContent;
+    document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+// 開局初始化
+window.onload = initGame;
+</script>
+</body>
+</html>
