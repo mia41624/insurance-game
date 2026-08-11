@@ -650,7 +650,7 @@ function showGameTutorial() {
                 <p style="margin: 8px 0 8px 0; font-weight: bold; color: #1565c0;">【每回合流程】</p>
                 <ol style="margin: 0; padding-left: 20px;">
                     <li><strong>🟢 樂活體驗：</strong>決定是否進行活動賺錢或補血。</li>
-                    <li><strong>🔵 防禦整備：</strong>可花費金幣購買產險或裝備。</li>
+                    <li><strong>🔵 防禦整備：</strong>可花費金幣購買產險或裝備，記得有分為產險卡、觀念卡及設備卡呦！</li>
                     <li><strong>🔴 命運降臨：</strong>盲抽日常衰事！若有對應防禦卡將觸發<b>「產險啟動」</b>免罰或減免！</li>
                 </ol>
 
@@ -691,7 +691,7 @@ function updateUI() {
 function startPhase1() {
     updateUI(); // 👈 關鍵修正：進入階段 1 時先更新右上角狀態（包含回合數）
     
-    document.getElementById('phase-text').innerText = `第 ${gameState.round} 回合 - 階段 1：樂活體驗（選擇是否執行）`;
+    document.getElementById('phase-text').innerText = `第 ${gameState.round} 回合 - 階段 1：樂活體驗`;
     gameState.currentGreen = gameState.greenDeck.pop();
     const card = gameState.currentGreen;
 
@@ -736,7 +736,7 @@ function useGreenCard(choice) {
 
 // --- 階段 2：購買產險防禦卡（分類分頁版） ---
 function startPhase2() {
-    document.getElementById('phase-text').innerText = `第 ${gameState.round} 回合 - 階段 2：防禦整備（可購買防禦卡）`;
+    document.getElementById('phase-text').innerText = `第 ${gameState.round} 回合 - 階段 2：防禦整備`;
     renderShopView();
 }
 
@@ -812,7 +812,7 @@ function buyBlueCard(cardId) {
 
 // --- 階段 3：盲抽命運風險卡與對應結算 ---
 function startPhase3() {
-    document.getElementById('phase-text').innerText = `第 ${gameState.round} 回合 - 階段 3：命運降臨（強制盲抽）`;
+    document.getElementById('phase-text').innerText = `第 ${gameState.round} 回合 - 階段 3：命運降臨`;
     
     gameState.currentRed = gameState.redDeck.pop();
     const card = gameState.currentRed;
