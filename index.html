@@ -982,13 +982,6 @@ function showFinalResult() {
     let rankMeme = ""; 
     let badgeColor = "#1565c0"; // 稱號邊框顏色
 
-function showFinalResult() {
-    const totalScore = (gameState.hp * 3) + gameState.coin;
-    let rankTitle = "";
-    let rankDesc = "";
-    let rankMeme = ""; 
-    let badgeColor = "#1565c0"; // 稱號邊框顏色
-
     // --- 全新細分分數級距（重點強化 45~70 分） ---
     if (totalScore >= 65) {
         // 級距 1：65 分以上 (神話級)
@@ -1001,7 +994,7 @@ function showFinalResult() {
         rankTitle = "👑 產險大亨・水逆終結者";
         rankMeme = "【天花板級神操作】";
         badgeColor = "#e65100"; // 帝王橘
-        rankDesc = "太強了！分數突破 60 分大關！你把每一分金幣與血條都發揮到了極致，防禦卡佈局天衣無縫，連貴賓室的龍蝦都吃到爽！水逆完全拿你沒轍！";
+        rankDesc = "太強了！分數突破 65 分大關！你把每一分金幣與血條都發揮到了極致，防禦卡佈局天衣無縫，連貴賓室的龍蝦都吃到爽！水逆完全拿你沒轍！";
     } else if (totalScore >= 55) {
         // 級距 3：55~59 分 (金牌級 - 新增)
         rankTitle = "🔱 資產防護網CEO・精明理財大師";
