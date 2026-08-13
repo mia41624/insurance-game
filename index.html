@@ -238,6 +238,33 @@
             color: #333;
             text-align: left;
         }
+		/* 9:16 直式迷因圖片容器 */
+		.meme-container {
+			width: 100%;
+			max-width: 260px; /* 控制彈窗內圖片寬度 */
+			aspect-ratio: 9 / 16; /* 強制保持 9:16 直式黃金比例 */
+			margin: 12px auto;
+			border-radius: 12px;
+			overflow: hidden;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+			background-color: #222;
+		}
+		.meme-container img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover; /* 確保圖片滿版不變形 */
+			display: block;
+		}
+		/* 社群分享與下載提示區塊 */
+		.share-box {
+			background: #fff3e0;
+			border: 1px dashed #ff9800;
+			border-radius: 10px;
+			padding: 10px;
+			margin-top: 10px;
+			font-size: 0.85rem;
+			color: #e65100;
+		}	
     </style>
 </head>
 <body>
@@ -898,23 +925,54 @@ function closeModalAndNext() {
     }
 }
 
-// --- 檢測勝敗與結算 ---
+// --- 檢測勝敗與水逆爆牌彈窗 ---
 function checkGameOver() {
     if (gameState.hp <= 0) {
         gameState.hp = 0;
         updateUI();
+
+        // 預設的 9:16 迷因圖範例（請替換為你的圖片路徑，如 'images/game_over_9_16.png'）
+        const gameOverImg = 'images/水逆爆牌.jpg';
+
         showModal(`
-            <div style="font-size:2rem;">💀</div>
-            <h2 style="color:#c62828;">水逆爆牌！戰敗！</h2>
-            <p>你的血條已歸零，人生直接撞牆崩盤！</p>
-            <div style="background:#eee; padding:20px; border-radius:8px; margin:10px 0;">
-                [ 專屬敗北迷因圖：主角躺在地上哭泣 ]
+            <div style="font-size:2rem; margin-bottom: 4px;">💥</div>
+            <h2 style="color:#c62828; margin: 0 0 6px 0;">水逆爆牌！慘遭淘汰！</h2>
+            <p style="font-size:0.85rem; color:#666; margin:0;">你的血條已歸零，人生直接撞牆崩盤！</p>
+            
+            <!-- 9:16 直式迷因圖區域 -->
+            <div class="meme-container">
+                <img src="${gameOverImg}" alt="水逆爆牌專屬敗北迷因圖" id="fail-meme-img">
             </div>
-            <button class="btn-primary" onclick="closeModal(); initGame();">重新挑戰</button>
+
+            <!-- 下載與社群分享引導區塊 -->
+            <div class="share-box">
+                <strong>📲 拍照存圖，炫耀你的水逆極限！</strong><br>
+                <span>長按上方圖片儲存，或截圖分享至 IG Story / FB，看看誰才是真正的地表衰神！</span>
+            </div>
+
+            <!-- 操作按鈕區 -->
+            <div class="btn-group" style="margin-top: 12px; gap: 8px;">
+                <button class="btn-primary" style="font-size: 0.88rem;" onclick="downloadMeme('${gameOverImg}')">
+                    💾 下載敗北圖
+                </button>
+                <button class="btn-danger" style="font-size: 0.88rem;" onclick="closeModal(); initGame();">
+                    🔄 不服氣，再試一次
+                </button>
+            </div>
         `);
         return true;
     }
     return false;
+}
+
+// --- 全新：下載圖片輔助函式 ---
+function downloadMeme(imgUrl) {
+    const link = document.createElement('a');
+    link.href = imgUrl;
+    link.download = '水逆爆牌敗北迷因圖.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 function showFinalResult() {
@@ -924,21 +982,28 @@ function showFinalResult() {
     let rankMeme = ""; 
     let badgeColor = "#1565c0"; // 稱號邊框顏色
 
-    // --- 全新細分分數級距（重點強化 45~75 分） ---
-    if (totalScore >= 75) {
-        // 級距 1：75 分以上 (神話級)
+function showFinalResult() {
+    const totalScore = (gameState.hp * 3) + gameState.coin;
+    let rankTitle = "";
+    let rankDesc = "";
+    let rankMeme = ""; 
+    let badgeColor = "#1565c0"; // 稱號邊框顏色
+
+    // --- 全新細分分數級距（重點強化 45~70 分） ---
+    if (totalScore >= 65) {
+        // 級距 1：65 分以上 (神話級)
         rankTitle = "🌌 國泰產險代言人・水逆平行宇宙創世神";
         rankMeme = "【破表神級傳說】";
         badgeColor = "#7b1fa2"; // 尊爵紫
-        rankDesc = "天啊！75分以上的神級表現！你根本是產險界的巴菲特吧！不僅風險零漏洞，還把生活樂活卡與裝備被動運算到了極致！水逆在你面前只能跪著走，你就是理財與避險的終極天花板！";
-    } else if (totalScore >= 65) {
-        // 級距 2：65~75 分 (帝王級 - 新增)
+        rankDesc = "天啊！65分以上的神級表現！你根本是產險界的巴菲特吧！不僅風險零漏洞，還把生活樂活卡與裝備被動運算到了極致！水逆在你面前只能跪著走，你就是理財與避險的終極天花板！";
+    } else if (totalScore >= 60) {
+        // 級距 2：60~64 分 (帝王級 - 新增)
         rankTitle = "👑 產險大亨・水逆終結者";
         rankMeme = "【天花板級神操作】";
         badgeColor = "#e65100"; // 帝王橘
-        rankDesc = "太強了！分數突破 65 分大關！你把每一分金幣與血條都發揮到了極致，防禦卡佈局天衣無縫，連貴賓室的龍蝦都吃到爽！水逆完全拿你沒轍！";
+        rankDesc = "太強了！分數突破 60 分大關！你把每一分金幣與血條都發揮到了極致，防禦卡佈局天衣無縫，連貴賓室的龍蝦都吃到爽！水逆完全拿你沒轍！";
     } else if (totalScore >= 55) {
-        // 級距 3：55~64 分 (金牌級 - 新增)
+        // 級距 3：55~59 分 (金牌級 - 新增)
         rankTitle = "🔱 資產防護網CEO・精明理財大師";
         rankMeme = "【極致精算避險】";
         badgeColor = "#ff8f00"; // 琥珀金
