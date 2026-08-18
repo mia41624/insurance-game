@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -200,15 +200,20 @@
             opacity: 1;
             pointer-events: auto;
         }
-        .modal-content {
-            background: white;
-            width: 85%;
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            transform: scale(0.8);
-            transition: transform 0.3s ease;
-        }
+		.modal-content {
+			background: white;
+			width: 88%;
+			max-width: 400px;
+			max-height: 85vh; /* 限制最高為螢幕的 85% */
+			overflow-y: auto; /* 內容過長時允許上下滑動 */
+			-webkit-overflow-scrolling: touch;
+			border-radius: 16px;
+			padding: 18px;
+			text-align: center;
+			box-sizing: border-box;
+			transform: scale(0.8);
+			transition: transform 0.3s ease;
+		}
         .modal-overlay.active .modal-content {
             transform: scale(1);
         }
@@ -253,6 +258,23 @@
 			width: 100%;
 			height: 100%;
 			object-fit: cover; /* 確保圖片滿版不變形 */
+			display: block;
+		}
+		/* 9:16 直式成果圖片容器 */
+		.result-card-container {
+			width: 100%;
+			max-width: 260px; /* 適合手機彈窗的寬度 */
+			aspect-ratio: 9 / 16; /* 強制保持 9:16 直式比例 */
+			margin: 12px auto;
+			border-radius: 12px;
+			overflow: hidden;
+			box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+			background-color: #111;
+		}
+		.result-card-container img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
 			display: block;
 		}
 		/* 社群分享與下載提示區塊 */
@@ -975,76 +997,115 @@ function downloadMeme(imgUrl) {
     document.body.removeChild(link);
 }
 
+// --- 通關結算彈窗（全級距 9:16 直式成果卡版） ---
 function showFinalResult() {
     const totalScore = (gameState.hp * 3) + gameState.coin;
     let rankTitle = "";
     let rankDesc = "";
     let rankMeme = ""; 
-    let badgeColor = "#1565c0"; // 稱號邊框顏色
+    let badgeColor = "#1565c0";
+    let rankImg = ""; // 儲存該級距對應的 9:16 圖片
 
-    // --- 全新細分分數級距（重點強化 45~70 分） ---
+    // --- 7 大分數級距與 9:16 成果卡設定 ---
     if (totalScore >= 65) {
         // 級距 1：65 分以上 (神話級)
         rankTitle = "🌌 國泰產險代言人・水逆平行宇宙創世神";
         rankMeme = "【破表神級傳說】";
         badgeColor = "#7b1fa2"; // 尊爵紫
+		rankImg = 'images/國泰產險代言人.jpg'
         rankDesc = "天啊！65分以上的神級表現！你根本是產險界的巴菲特吧！不僅風險零漏洞，還把生活樂活卡與裝備被動運算到了極致！水逆在你面前只能跪著走，你就是理財與避險的終極天花板！";
     } else if (totalScore >= 60) {
         // 級距 2：60~64 分 (帝王級 - 新增)
         rankTitle = "👑 產險大亨・水逆終結者";
         rankMeme = "【天花板級神操作】";
         badgeColor = "#e65100"; // 帝王橘
-        rankDesc = "太強了！分數突破 60 分大關！你把每一分金幣與血條都發揮到了極致，防禦卡佈局天衣無縫，連貴賓室的龍蝦都吃到爽！水逆完全拿你沒轍！";
+		rankImg = 'images/產險大亨.jpg'
+        rankDesc = "太強了！分數突破 65 分大關！你把每一分金幣與血條都發揮到了極致，防禦卡佈局天衣無縫，連貴賓室的龍蝦都吃到爽！水逆完全拿你沒轍！";
     } else if (totalScore >= 55) {
         // 級距 3：55~59 分 (金牌級 - 新增)
         rankTitle = "🔱 資產防護網CEO・精明理財大師";
         rankMeme = "【極致精算避險】";
         badgeColor = "#ff8f00"; // 琥珀金
+		rankImg = 'images/資產防護網.jpg'
         rankDesc = "極度優秀的操作！你展現了高超的戰術頭腦，不僅樂活享受生活，更打造了牢不可破的產險防護網。遭遇衰事依然毫髮無傷，資產與精神值雙雙爆表！";
     } else if (totalScore >= 45) {
         // 級距 4：45~54 分 (翡翠級 - 新增)
         rankTitle = "🌟 避險大師・資產神盾局長";
         rankMeme = "【全方位超前部署】";
         badgeColor = "#2e7d32"; // 翡翠綠
+		rankImg = 'images/避險大師.jpg'
         rankDesc = "完美的風險控管！你知道什麼時候該享受、什麼時候該買好裝備防禦。就算遇到泡水車或班機延誤，產險一啟動依然老神在在，生活過得優雅又安心！";
     } else if (totalScore >= 30) {
         // 級距 5：30~44 分 (優等生)
         rankTitle = "🛡️ 平安小資・順風順水幸運兒";
         rankMeme = "【穩紮穩打過生活】";
         badgeColor = "#1976d2"; // 質感藍
+		rankImg = 'images/平安小資.jpg'
         rankDesc = "恭喜順利通關！雖然途中遇到一些小波折，但靠著基本防衛與樂活補血，依然平平安安地存活下來，平安就是最大的福氣！";
     } else if (totalScore >= 15) {
         // 級距 6：15~29 分 (險勝)
         rankTitle = "🩹 殘血倖存者・水逆重災戶";
         rankMeme = "【捏著冷汗勉強過關】";
         badgeColor = "#d32f2f"; // 警告紅
+		rankImg = 'images/殘血倖存者.jpg'
         rankDesc = "呼～好險保住一條小命！你這三回合過得心驚膽跳，裸奔被爆打好幾次，錢包差點掏空、血條險些歸零。下次記得把產險買齊買滿再出門啊！";
     } else {
         // 級距 7：14 分以下 (低空飛過)
         rankTitle = "💸 破產地獄犬・地表最強衰神";
         rankMeme = "【雖然活著但全身是傷】";
         badgeColor = "#424242"; // 黯淡灰
+		rankImg = 'images/破產地獄犬.jpg'
         rankDesc = "居然還能活著？！雖然勉強沒有爆牌，但你的口袋已經比洗過的衣服還乾淨，心靈也滿是創傷。這不是水逆，這是水星直接砸在你頭上了吧！建議快去廟裡收驚！";
     }
 
-    // 顯示結果彈窗
+// 顯示結果彈窗（分數置頂醒目版）
     showModal(`
-        <h2>🎉 通關成功！遊戲結束</h2>
-        <div style="background:#f0f4f8; padding:12px; border-radius:10px; margin:10px 0;">
-            <p style="margin:4px 0;">最終血條：❤️ ${gameState.hp} × 3 = <strong>${gameState.hp * 3} 分</strong></p>
-            <p style="margin:4px 0;">最終金幣：🪙 ${gameState.coin} = <strong>${gameState.coin} 分</strong></p>
-            <hr style="border:0; border-top:1px dashed #ccc; margin:8px 0;">
-            <h3 style="color:#1565c0; margin:4px 0; font-size:1.5rem;">總結算分數：${totalScore} 分</h3>
-        </div>
+        <div style="font-size: 2rem; margin-bottom: 2px;">🎉</div>
+        <h2 style="margin: 0 0 6px 0; color: #1565c0; font-size: 1.3rem;">水逆生存戰・結算報告</h2>
         
-        <div style="border:2px solid ${badgeColor}; border-radius:12px; padding:12px; background:#fff;">
-            <span style="font-size:0.8rem; color:${badgeColor}; font-weight:bold;">${rankMeme}</span>
-            <h3 style="color:${badgeColor}; margin:6px 0 10px 0; font-size:1.2rem;">${rankTitle}</h3>
-            <p style="font-size:0.88rem; color:#444; line-height:1.4; text-align:left; margin:0;">${rankDesc}</p>
+        <div style="background: #eef7ee; border: 2px solid #4caf50; padding: 10px; border-radius: 12px; margin: 8px 0;">
+            <div style="font-size: 0.85rem; color: #555;">
+                ❤️ 血條：${gameState.hp} × 3 (${gameState.hp * 3}分) ｜ 💰 金幣：${gameState.coin}分
+            </div>
+            <div style="color: #2e7d32; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
+                總結算分數：${totalScore} 分
+            </div>
         </div>
 
-        <button class="btn-success" style="margin-top:15px;" onclick="closeModal(); initGame();">挑戰更高的極限！</button>
+        <div style="border-left: 4px solid ${badgeColor}; padding-left: 8px; margin: 8px 0 12px 0; text-align: left; background: #fafafa; padding: 8px;">
+            <span style="font-size: 0.75rem; color: ${badgeColor}; font-weight: bold;">${rankMeme}</span>
+            <div style="font-weight: bold; color: ${badgeColor}; font-size: 1.05rem;">${rankTitle}</div>
+            <div style="font-size: 0.82rem; color: #444; line-height: 1.4; margin-top: 3px;">${rankDesc}</div>
+        </div>
+
+        <div class="result-card-container" style="max-width: 200px; margin: 10px auto;">
+            <img src="${rankImg}" alt="${rankTitle}">
+        </div>
+
+        <div class="share-box">
+            <strong>📲 炫耀你的水逆生存戰績！</strong><br>
+            <span style="font-size: 0.78rem;">長按卡片儲存，或截圖分享至 IG Story / FB！</span>
+        </div>
+
+        <div class="btn-group" style="margin-top: 12px; gap: 8px;">
+            <button class="btn-primary" style="font-size: 0.85rem;" onclick="downloadResultImage('${rankImg}', '${rankTitle}')">
+                💾 下載成果卡
+            </button>
+            <button class="btn-success" style="font-size: 0.85rem;" onclick="closeModal(); initGame();">
+                🔄 再挑戰一次
+            </button>
+        </div>
     `);
+}
+
+// --- 下載成果卡輔助函式 ---
+function downloadResultImage(imgUrl, rankTitle) {
+    const link = document.createElement('a');
+    link.href = imgUrl;
+    link.download = `水逆生存戰_${rankTitle}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // --- Modal 控制 ---
